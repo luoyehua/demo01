@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                            http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/mvc
+                            http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                            http://code.alibabatech.com/schema/dubbo
+                            http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+                            http://www.springframework.org/schema/context
+                            http://www.springframework.org/schema/context/spring-context.xsd
+                            http://www.springframework.org/schema/security
+                            http://www.springframework.org/schema/security/spring-security.xsd">
+    <!--    现在要加密码了注解驱动-->
+    <mvc:annotation-driven></mvc:annotation-driven>
+    <!--    包扫描-->
+    <context:component-scan base-package="com.test"></context:component-scan>
+    <!--开启注解方式的权限控制-->
+    <security:global-method-security pre-post-annotations="enabled"/>
+
+
+    <!--   有资源不需要被拦截:所以需要配置匿名访问
+    -->
+    <security:http pattern="/js/**" security="none"></security:http>
+    <security:http pattern="/css/**" security="none"></security:http>
+    <security:http pattern="/img/**" security="none"></security:http>
+    <security:http pattern="/login.html" security="none"></security:http>
+
+
+    <!--   1::: 第一步配置需要权限才能访问的资源
+
+    auto-config:表示的是自动配置:
+    use-expressions:表示的是否需要用表达式:
+    -->
+    <security:http auto-config="true" use-expressions="true">
+        <security:intercept-url pattern="/**" access="hasRole('ADMIN')"></security:intercept-url>
+
+        <!--        配置拦截路径
+        pattern:表示的是拦截的路径:
+        access:表示的是需要什么权限才能访问
+        -->
+        <!--        加入表单信息配置:-->
+        <security:form-login login-page="/login.html"
+                             username-parameter="username"
+                             password-parameter="password"
+                             login-processing-url="/login.do"
+                             authentication-failure-url="/login.html"
+                             authentication-success-forward-url="/index.html"/>
+
+
+        <!--        关闭过滤器CsrfFilter-->
+        <security:csrf disabled="true"></security:csrf>
+
+        <!--<security:intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></security:intercept-url>-->
+
+        <!--        拦截配置-->
+
+        <!--<security:intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></security:intercept-url>-->
+        <!--<security:intercept-url pattern="/a.html" access="isAuthenticated()"></security:intercept-url>
+        <security:intercept-url pattern="/b.html" access="hasAnyAuthority('begin')"></security:intercept-url>
+        <security:intercept-url pattern="/c.html" access="hasRole('down')"></security:intercept-url>-->
+        <!--
+ -->
+
+    </security:http>
+    <!--    2：：：：配置认证管理器
+    -->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="springSecurityUserService">
+            <!--<security:user-service>-->
+            <!--      这段配置文件后面被代码锁取代了 noop不加密的密码要加这个       配置的账号密码还有就是登录这个账号密码被授予了什么权限-->
+            <!--<security:user name="admin" authorities="ROLE_ADMIN" password="{noop}123456"></security:user>
+            这段配置就是给这个账号授权让代码给取代了
+            -->
+            <!--</security:user-service>-->
+            <security:password-encoder ref="bCryptPasswordEncoder"></security:password-encoder>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+
+    <bean id="springSecurityUserService" class="com.test.controller.SpringSecurityUserService"></bean>
+    <bean id="bCryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+
+</beans>
